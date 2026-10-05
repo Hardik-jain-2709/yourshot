@@ -181,6 +181,13 @@ label.lab{margin-bottom:0}
 .inp span{padding-left:14px;font-weight:800;color:var(--mute)}
 .inp input{flex:1;min-width:0;border:0;background:transparent;font:700 1.05rem/1 var(--body);color:var(--plum-deep);padding:15px 14px;outline:none}
 .inp input::placeholder{color:var(--mute);opacity:.6;font-weight:500}
+.row2{display:flex;flex-wrap:wrap;gap:12px;align-items:start}
+.row2 .field{flex:1 1 120px;min-width:0}
+.row2 .field.city{flex:0 1 160px}
+.inp.sel{position:relative}
+.inp.sel svg{width:18px;height:18px;margin-left:12px;flex:none;fill:var(--plum)}
+.inp.sel::after{content:"";position:absolute;right:13px;top:50%;width:8px;height:8px;border-right:2px solid var(--plum);border-bottom:2px solid var(--plum);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.inp select{flex:1;min-width:0;border:0;background:transparent;font:700 1rem/1.2 var(--body);color:var(--plum-deep);padding:15px 28px 15px 6px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;text-overflow:ellipsis}
 .err{font-weight:700;color:var(--err);font-size:.92rem}
 .fine{font-size:.88rem;color:var(--mute)}
 form .btn{width:100%;font-size:1.1rem;padding:1.05em}
@@ -475,10 +482,30 @@ html.anim .stage.in .doodle{scale:1}
             <label class="opt"><input type="radio" name="often" id="often-rare" value="Now and then">Now and then</label>
           </div>
         </fieldset>
-        <div class="field">
-          <label class="lab" for="name">Your name</label>
-          <div class="inp"><input id="name" name="name" type="text" autocomplete="given-name" placeholder="First name is fine"></div>
-          <p class="err" id="err-n" hidden>Add your name so we know who to message.</p>
+        <div class="row2">
+          <div class="field">
+            <label class="lab" for="name">Your name</label>
+            <div class="inp"><input id="name" name="name" type="text" autocomplete="given-name" placeholder="First name is fine"></div>
+            <p class="err" id="err-n" hidden>Add your name so we know who to message.</p>
+          </div>
+          <div class="field city">
+            <label class="lab" for="city">City</label>
+            <div class="inp sel"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></svg><select id="city" name="city" autocomplete="address-level2">
+              <option value="Hyderabad" selected>Hyderabad</option>
+              <option value="Bengaluru">Bengaluru</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Delhi NCR">Delhi NCR</option>
+              <option value="Chennai">Chennai</option>
+              <option value="Pune">Pune</option>
+              <option value="Kolkata">Kolkata</option>
+              <option value="Ahmedabad">Ahmedabad</option>
+              <option value="Other">Another city</option>
+            </select></div>
+          </div>
+        </div>
+        <div class="field" id="city-other-wrap" hidden>
+          <label class="lab" for="city-other">Which city?</label>
+          <div class="inp"><input id="city-other" name="city-other" type="text" autocomplete="address-level2" placeholder="Your city"></div>
         </div>
         <div class="field">
           <label class="lab" for="phone">WhatsApp number</label>
@@ -717,6 +744,8 @@ html.anim .stage.in .doodle{scale:1}
     b.addEventListener("click", function(){ $("fl-" + b.dataset.want).checked = true; paint(); go("waitlist"); });
   });
 
+  function cityPick(){ $("city-other-wrap").hidden = $("city").value !== "Other"; }
+  $("city").addEventListener("change", function(){ cityPick(); if ($("city").value === "Other") $("city-other").focus(); });
   function cleanPhone(v){
     var d = String(v).replace(/\D/g, "");
     if (d.length === 12 && d.indexOf("91") === 0) d = d.slice(2);
@@ -734,6 +763,7 @@ html.anim .stage.in .doodle{scale:1}
     e.preventDefault();
     var d = {flavour: chosen(), name: $("name").value.trim(), phone: cleanPhone($("phone").value)};
     var often = form.querySelector('input[name="often"]:checked'); d.often = often ? often.value : "";
+    d.city = $("city").value === "Other" ? ($("city-other").value.trim() || "Other") : $("city").value;
     $("err-f").hidden = !!d.flavour; $("err-n").hidden = !!d.name; $("err-p").hidden = !!d.phone; $("err-s").hidden = true;
     if (!d.flavour || !d.name || !d.phone) { var bad = !d.flavour ? $("flavours") : !d.name ? $("name") : $("phone"); bad.scrollIntoView({block: "center", behavior: calm ? "auto" : "smooth"}); if (bad.focus) bad.focus({preventScroll: true}); return; }
     var finish = function(){
@@ -749,7 +779,7 @@ html.anim .stage.in .doodle{scale:1}
   });
   $("again").addEventListener("click", function(){
     try { localStorage.removeItem("yourshot-signup"); } catch (err) {}
-    form.reset(); form.hidden = false; $("done").hidden = true; paint();
+    form.reset(); form.hidden = false; $("done").hidden = true; paint(); cityPick();
   });
   try {
     var saved = JSON.parse(localStorage.getItem("yourshot-signup") || "null");
